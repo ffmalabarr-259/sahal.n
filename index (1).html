@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAMMADE KADA | Curated Everyday Essentials</title>
+  <link rel="stylesheet" href="/theme.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html:not(.authenticated) body {
+      visibility: hidden;
+    }
+  </style>
+  <script>
+    (function() {
+      try {
+        const session = JSON.parse(localStorage.getItem("nova_session") || "null");
+        if (session && (session.role === "customer" || session.role === "admin")) {
+          document.documentElement.classList.add("authenticated");
+          return;
+        }
+      } catch (error) {
+        // Treat unavailable or invalid session data as signed out.
+      }
+      window.location.replace("/login");
+    })();
+  </script>
+</head>
+
+<body>
+  <header>
+    <div class="logo">NAMMADE <span>KADA</span></div>
+    <nav class="header-actions" aria-label="Store navigation">
+      <button type="button" onclick="goTo('shop')">🛍 Shop</button>
+      <button type="button" onclick="goTo('cartPanel')">🛒 Cart (<span id="cartCount">0</span>)</button>
+      <button id="accountButton" type="button" onclick="openLogin('customer')">Sign in</button>
+      <button type="button" onclick="openProfile()">👤 Profile</button>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Thoughtfully chosen. Made for everyday.</p>
+      <h1>Everyday pieces, a little more special.</h1>
+      <p>Explore a considered collection of fashion, useful technology and home essentials, selected to bring comfort and character to your day.</p>
+      <button type="button" onclick="goTo('shop')">Discover the collection →</button>
+    </div>
+  </section>
+
+  <div class="features" aria-label="Store services">
+    <span>✦ Curated everyday essentials</span>
+    <span>✦ Simple, considered shopping</span>
+    <span>✦ Personal email ordering</span>
+    <span>✦ Here when you need us</span>
+  </div>
+
+  <main>
+    <section id="shop" aria-labelledby="shopTitle">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">The NAMMADE KADA edit</p>
+          <h2 id="shopTitle">Find your new favourites</h2>
+          <p class="small">A thoughtfully selected range for daily life, work and home.</p>
+        </div>
+        <input id="search" class="searchbar" type="search" placeholder="🔍 Search products..." aria-label="Search products" oninput="renderProducts()">
+      </div>
+
+      <div class="categories" id="categories" aria-label="Product categories">
+        <button class="active" type="button" data-category="All" aria-pressed="true" onclick="setCategory('All', this)">All Products</button>
+        <button type="button" data-category="Fashion" aria-pressed="false" onclick="setCategory('Fashion', this)">👕 Fashion</button>
+        <button type="button" data-category="Electronics" aria-pressed="false" onclick="setCategory('Electronics', this)">🎧 Electronics</button>
+        <button type="button" data-category="Home" aria-pressed="false" onclick="setCategory('Home', this)">🏠 Home &amp; Kitchen</button>
+      </div>
+
+      <p id="productCount" class="small" aria-live="polite"></p>
+      <div id="productGrid"></div>
+    </section>
+
+    <section id="cartPanel" class="panel" aria-labelledby="cartTitle">
+      <h2 id="cartTitle">🛒 Your Shopping Cart</h2>
+      <div id="cartItems"></div>
+      <div class="cart-total">Total: <span id="cartTotal">₹0</span></div>
+      <button class="primary" type="button" onclick="openCheckout()">Proceed to Delivery →</button>
+      <button class="muted-btn" type="button" onclick="clearCart()">Clear Cart</button>
+    </section>
+
+    <section id="checkoutPanel" class="panel" hidden aria-labelledby="checkoutTitle">
+      <h2 id="checkoutTitle">🚚 Delivery Details</h2>
+      <p class="small">Enter your details to prepare your order.</p>
+      <form id="checkoutForm">
+        <div class="form-grid">
+          <input name="customer" placeholder="Full name" autocomplete="name" required>
+          <input name="phone" placeholder="Phone number" type="tel" autocomplete="tel" required>
+          <input name="email" placeholder="Email (optional)" type="email" autocomplete="email">
+          <select name="delivery" required aria-label="Delivery option">
+            <option value="Home Delivery">Home Delivery</option>
+            <option value="Pickup">Store Pickup</option>
+          </select>
+          <textarea name="address" class="wide" placeholder="Full delivery address" autocomplete="street-address" required></textarea>
+          <textarea name="notes" class="wide" placeholder="Order notes (optional)"></textarea>
+        </div>
+        <p class="small">Payment: Confirm the payment method and delivery charges with the store before completing the purchase.</p>
+        <button class="green" type="submit">Send Order by Email</button>
+        <button class="muted-btn" type="button" onclick="document.getElementById('checkoutPanel').hidden = true">Cancel</button>
+      </form>
+    </section>
+
+    <section id="adminPanel" class="panel" hidden aria-labelledby="adminTitle">
+      <h2 id="adminTitle">⚙ Demo Admin Dashboard</h2>
+      <p class="small">This demo has no secure login. Do not use it as a real public store administration system.</p>
+
+      <section class="profile-settings" aria-labelledby="profileSettingsTitle">
+        <div class="profile-settings-heading">
+          <div>
+            <p class="eyebrow">YOUR WORKSPACE</p>
+            <h3 id="profileSettingsTitle">Profile &amp; settings</h3>
+          </div>
+          <span class="profile-badge">Admin</span>
+        </div>
+        <div class="profile-editor">
+          <img id="profilePicturePreview" class="profile-picture" src="" alt="Profile picture preview" hidden>
+          <form id="adminProfileForm" class="form-grid">
+            <label class="settings-field">
+              Display name
+              <input name="displayName" type="text" placeholder="Store Admin" required>
+            </label>
+            <label class="settings-field">
+              Nickname
+              <input name="nickname" type="text" placeholder="What should we call you?">
+            </label>
+            <label class="settings-field">
+              Contact email
+              <input name="contactEmail" type="email" placeholder="admin@example.com" required>
+            </label>
+            <label class="settings-field">
+              Profile picture URL
+              <input name="profilePicture" type="url" placeholder="Paste an image link (optional)">
+            </label>
+            <button class="primary wide" type="submit">Save profile</button>
+          </form>
+        </div>
+
+        <section class="money-overview" aria-labelledby="moneyOverviewTitle">
+          <div>
+            <p class="eyebrow">STORE ACTIVITY</p>
+            <h4 id="moneyOverviewTitle">Money overview</h4>
+            <p class="small">Totals are based on order requests prepared in this browser, not confirmed payments.</p>
+          </div>
+          <div class="money-stats">
+            <article class="money-stat">
+              <span>Order requests</span>
+              <strong id="orderRequestCount">0</strong>
+            </article>
+            <article class="money-stat">
+              <span>Requested order value</span>
+              <strong id="orderRequestTotal">₹0</strong>
+            </article>
+            <article class="money-stat">
+              <span>Current cart value</span>
+              <strong id="profileCartTotal">₹0</strong>
+            </article>
+          </div>
+        </section>
+
+        <form id="adminSettingsForm" class="form-grid settings-divider">
+          <h4 class="wide settings-title">Sign-in settings</h4>
+          <label class="settings-field">
+            Admin login email
+            <input name="loginEmail" type="email" placeholder="Admin login email" required>
+          </label>
+          <label class="settings-field">
+            New admin password
+            <input name="loginPassword" type="password" minlength="6" placeholder="Leave blank to keep current password">
+          </label>
+          <p class="small wide">These demo settings are saved only in this browser and are not secure for a live store.</p>
+          <button class="muted-btn wide" type="submit">Save sign-in settings</button>
+        </form>
+      </section>
+
+      <h3>Add a Product</h3>
+      <form id="productForm" class="form-grid">
+        <input name="name" placeholder="Product name" required>
+        <select name="category" aria-label="Product category">
+          <option>Fashion</option>
+          <option>Electronics</option>
+          <option>Home</option>
+        </select>
+        <input name="price" type="number" min="1" placeholder="Price in ₹" required>
+        <input name="image" type="url" placeholder="Image URL (optional)">
+        <input name="description" class="wide" placeholder="Product description" required>
+        <button class="primary wide" type="submit">Add Product</button>
+      </form>
+      <h3>Manage Products</h3>
+      <div id="adminProducts"></div>
+      <button class="muted-btn" type="button" onclick="resetProducts()">Reset Demo Products</button>
+
+      <section class="order-inbox" aria-labelledby="orderInboxTitle">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">CUSTOMER MESSAGES</p>
+            <h3 id="orderInboxTitle">Order inbox</h3>
+            <p class="small">Order requests saved in this browser appear here.</p>
+          </div>
+        </div>
+        <div id="adminOrderInbox" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <h3>NAMMADE KADA</h3>
+    <p>Fashion · Electronics · Home &amp; Kitchen</p>
+    <p>Send your order details by email using the checkout form.</p>
+    <p>© <span id="year"></span> NAMMADE KADA. Demo shopping website.</p>
+  </footer>
+
+  <section id="authDialog" class="auth-backdrop" hidden aria-label="Account sign in">
+    <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button class="auth-close" type="button" onclick="closeLogin()" aria-label="Close sign in">×</button>
+      <p class="eyebrow">NAMMADE KADA ACCOUNT</p>
+      <h2 id="authTitle">Welcome back</h2>
+      <p id="authDescription" class="small">Sign in to your customer account.</p>
+
+      <div class="auth-tabs" role="tablist" aria-label="Choose account type">
+        <button id="customerTab" class="active" type="button" role="tab" aria-selected="true" onclick="setLoginRole('customer')">Customer</button>
+        <button id="adminTab" type="button" role="tab" aria-selected="false" onclick="setLoginRole('admin')">Admin</button>
+      </div>
+
+      <form id="customerLoginForm" class="auth-form">
+        <label id="customerNameField" hidden>
+          Your name
+          <input name="name" autocomplete="name" placeholder="Full name">
+        </label>
+        <label>
+          Email address
+          <input name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <label>
+          Password
+          <input name="password" type="password" autocomplete="current-password" minlength="6" placeholder="At least 6 characters" required>
+        </label>
+        <button id="customerSubmit" class="primary auth-submit" type="submit">Sign in</button>
+        <p class="auth-warning">Demo account only. Credentials are stored in this browser and are not secure for real customer data.</p>
+        <p class="auth-switch"><span id="authSwitchText">New to NAMMADE KADA?</span> <button id="authSwitchButton" type="button" onclick="toggleCustomerMode()">Create an account</button></p>
+      </form>
+
+      <form id="adminLoginForm" class="auth-form" hidden>
+        <label>
+          Admin email
+          <input name="email" type="email" autocomplete="username" placeholder="Admin email" required>
+        </label>
+        <label>
+          Admin password
+          <input name="password" type="password" autocomplete="current-password" placeholder="Admin password" required>
+        </label>
+        <button class="primary auth-submit" type="submit">Sign in as admin</button>
+                  <p class="auth-warning">Demo credentials: ffmalabarr@gmail.com · Password: sugunan123. This browser-only sign-in is not secure for a live store.</p>
+      </form>
+    </div>
+  </section>
+
+  <div id="notice" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    // Add your store's email address here to receive customer orders.
+    const STORE_EMAIL = "";
+
+    // Demo-only credentials. Static pages cannot securely protect admin access.
+    // Change these values for a private preview; use server-side authentication for a real store.
+    const ADMIN_DEFAULT_EMAIL = "ffmalabarr@gmail.com";
+    const ADMIN_DEFAULT_PASSWORD = "sugunan123";
+    const ADMIN_SETTINGS_KEY = "nova_admin_settings";
+
+    function getAdminSettings() {
+      return loadData(ADMIN_SETTINGS_KEY, {
+        displayName: "Store Admin",
+        nickname: "",
+        profilePicture: "",
+        contactEmail: ADMIN_DEFAULT_EMAIL,
+        loginEmail: ADMIN_DEFAULT_EMAIL,
+        loginPassword: ADMIN_DEFAULT_PASSWORD
+      });
+    }
+
+    const originalProducts = [{
+        id: 1,
+        name: "Classic T-Shirt",
+        category: "Fashion",
+        price: 499,
+        image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80",
+        description: "Comfortable cotton T-shirt"
+      },
+      {
+        id: 2,
+        name: "Denim Jeans",
+        category: "Fashion",
+        price: 999,
+        image: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=80",
+        description: "Everyday denim jeans"
+      },
+      {
+        id: 3,
+        name: "Casual Sneakers",
+        category: "Fashion",
+        price: 1499,
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+        description: "Comfortable casual shoes"
+      },
+      {
+        id: 4,
+        name: "Travel Backpack",
+        category: "Fashion",
+        price: 899,
+        image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80",
+        description: "Spacious daily backpack"
+      },
+      {
+        id: 5,
+        name: "Wrist Watch",
+        category: "Fashion",
+        price: 1299,
+        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+        description: "Stylish wristwatch"
+      },
+      {
+        id: 6,
+        name: "Sunglasses",
+        category: "Fashion",
+        price: 399,
+        image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=600&q=80",
+        description: "Everyday sunglasses"
+      },
+      {
+        id: 7,
+        name: "Women's Dress",
+        category: "Fashion",
+        price: 1199,
+        image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=600&q=80",
+        description: "Elegant casual dress"
+      },
+      {
+        id: 8,
+        name: "Leather Wallet",
+        category: "Fashion",
+        price: 349,
+        image: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=600&q=80",
+        description: "Compact everyday wallet"
+      },
+      {
+        id: 9,
+        name: "Hoodie",
+        category: "Fashion",
+        price: 899,
+        image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80",
+        description: "Soft casual hoodie"
+      },
+      {
+        id: 10,
+        name: "Formal Shoes",
+        category: "Fashion",
+        price: 1799,
+        image: "https://images.unsplash.com/photo-1614252369475-531eba835eb1?auto=format&fit=crop&w=600&q=80",
+        description: "Smart formal footwear"
+      },
+      {
+        id: 11,
+        name: "Cap",
+        category: "Fashion",
+        price: 249,
+        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=600&q=80",
+        description: "Casual everyday cap"
+      },
+      {
+        id: 12,
+        name: "Handbag",
+        category: "Fashion",
+        price: 1099,
+        image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80",
+        description: "Practical everyday handbag"
+      },
+      {
+        id: 13,
+        name: "Sports Shoes",
+        category: "Fashion",
+        price: 1599,
+        image: "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80",
+        description: "Shoes for active days"
+      },
+      {
+        id: 14,
+        name: "Winter Jacket",
+        category: "Fashion",
+        price: 1999,
+        image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=600&q=80",
+        description: "Comfortable outerwear"
+      },
+      {
+        id: 15,
+        name: "Wireless Headphones",
+        category: "Electronics",
+        price: 1999,
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+        description: "Wireless audio headphones"
+      },
+      {
+        id: 16,
+        name: "Smart Watch",
+        category: "Electronics",
+        price: 2499,
+        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
+        description: "Smart everyday watch"
+      },
+      {
+        id: 17,
+        name: "Bluetooth Speaker",
+        category: "Electronics",
+        price: 1299,
+        image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80",
+        description: "Portable wireless speaker"
+      },
+      {
+        id: 18,
+        name: "Computer Keyboard",
+        category: "Electronics",
+        price: 899,
+        image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
+        description: "Desktop computer keyboard"
+      },
+      {
+        id: 19,
+        name: "Computer Mouse",
+        category: "Electronics",
+        price: 499,
+        image: "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=600&q=80",
+        description: "Comfortable computer mouse"
+      },
+      {
+        id: 20,
+        name: "Digital Camera",
+        category: "Electronics",
+        price: 24999,
+        image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80",
+        description: "Camera for photography"
+      },
+      {
+        id: 21,
+        name: "Laptop",
+        category: "Electronics",
+        price: 49999,
+        image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=80",
+        description: "Laptop for work and study"
+      },
+      {
+        id: 22,
+        name: "Tablet",
+        category: "Electronics",
+        price: 14999,
+        image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=600&q=80",
+        description: "Portable touchscreen tablet"
+      },
+      {
+        id: 23,
+        name: "Mobile Phone",
+        category: "Electronics",
+        price: 12999,
+        image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80",
+        description: "Modern smartphone"
+      },
+      {
+        id: 24,
+        name: "Power Bank",
+        category: "Electronics",
+        price: 999,
+        image: "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?auto=format&fit=crop&w=600&q=80",
+        description: "Portable charging accessory"
+      },
+      {
+        id: 25,
+        name: "Wireless Earbuds",
+        category: "Electronics",
+        price: 1499,
+        image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?auto=format&fit=crop&w=600&q=80",
+        description: "Compact wireless earbuds"
+      },
+      {
+        id: 26,
+        name: "Gaming Controller",
+        category: "Electronics",
+        price: 2299,
+        image: "https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?auto=format&fit=crop&w=600&q=80",
+        description: "Controller for gaming"
+      },
+      {
+        id: 27,
+        name: "LED Desk Lamp",
+        category: "Electronics",
+        price: 799,
+        image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80",
+        description: "Lamp for your desk"
+      },
+      {
+        id: 28,
+        name: "Computer Monitor",
+        category: "Electronics",
+        price: 10999,
+        image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80",
+        description: "Monitor for your computer"
+      },
+      {
+        id: 29,
+        name: "Ceramic Coffee Mug",
+        category: "Home",
+        price: 199,
+        image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80",
+        description: "Ceramic mug for hot drinks"
+      },
+      {
+        id: 30,
+        name: "Decorative Plant",
+        category: "Home",
+        price: 299,
+        image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80",
+        description: "Decorative indoor plant"
+      },
+      {
+        id: 31,
+        name: "Table Lamp",
+        category: "Home",
+        price: 699,
+        image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80",
+        description: "Stylish home lighting"
+      },
+      {
+        id: 32,
+        name: "Throw Pillow",
+        category: "Home",
+        price: 399,
+        image: "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=600&q=80",
+        description: "Soft decorative cushion"
+      },
+      {
+        id: 33,
+        name: "Wall Clock",
+        category: "Home",
+        price: 599,
+        image: "https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=600&q=80",
+        description: "Wall clock for your room"
+      },
+      {
+        id: 34,
+        name: "Water Bottle",
+        category: "Home",
+        price: 249,
+        image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
+        description: "Reusable drinking bottle"
+      },
+      {
+        id: 35,
+        name: "Storage Basket",
+        category: "Home",
+        price: 349,
+        image: "https://images.unsplash.com/photo-1593085260707-5377ba37f868?auto=format&fit=crop&w=600&q=80",
+        description: "Basket for household storage"
+      },
+      {
+        id: 36,
+        name: "Dinner Plate Set",
+        category: "Home",
+        price: 899,
+        image: "https://images.unsplash.com/photo-1603199506016-b9a594b593c0?auto=format&fit=crop&w=600&q=80",
+        description: "Plates for everyday dining"
+      },
+      {
+        id: 37,
+        name: "Cooking Pan",
+        category: "Home",
+        price: 799,
+        image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80",
+        description: "Pan for home cooking"
+      },
+      {
+        id: 38,
+        name: "Bedsheet Set",
+        category: "Home",
+        price: 1199,
+        image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=600&q=80",
+        description: "Comfortable bedding set"
+      },
+      {
+        id: 39,
+        name: "Laundry Basket",
+        category: "Home",
+        price: 499,
+        image: "https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=600&q=80",
+        description: "Basket for laundry"
+      },
+      {
+        id: 40,
+        name: "Home Decor",
+        category: "Home",
+        price: 449,
+        image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=600&q=80",
+        description: "Decor for your home"
+      },
+      {
+        id: 41,
+        name: "Kitchen Storage Jars",
+        category: "Home",
+        price: 549,
+        image: "https://images.unsplash.com/photo-1603199506016-b9a594b593c0?auto=format&fit=crop&w=600&q=80",
+        description: "Jars for kitchen storage"
+      },
+      {
+        id: 42,
+        name: "Floor Rug",
+        category: "Home",
+        price: 1499,
+        image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=600&q=80",
+        description: "Decorative rug for your room"
+      }
+    ];
+
+    function loadData(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    let products = loadData("nova_products", originalProducts);
+    let cart = loadData("nova_cart", []);
+    let currentCategory = "All";
+
+    function saveData() {
+      try {
+        localStorage.setItem("nova_products", JSON.stringify(products));
+        localStorage.setItem("nova_cart", JSON.stringify(cart));
+      } catch (error) {
+        showNotice("Browser storage unavailable. Data may not persist.");
+      }
+    }
+
+    function money(amount) {
+      return "₹" + Number(amount).toLocaleString("en-IN");
+    }
+
+    function safe(text) {
+      return String(text).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
+
+    function showNotice(message) {
+      const element = document.getElementById("notice");
+      element.textContent = message;
+      element.style.display = "block";
+      clearTimeout(window.noticeTimer);
+      window.noticeTimer = setTimeout(() => {
+        element.style.display = "none";
+      }, 2600);
+    }
+
+    function goTo(id) {
+      document.getElementById(id).scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    function setCategory(category, button) {
+      currentCategory = category;
+      document.querySelectorAll("#categories button").forEach(item => {
+        const isActive = item === button;
+        item.classList.toggle("active", isActive);
+        item.setAttribute("aria-pressed", String(isActive));
+      });
+      renderProducts();
+    }
+
+    function renderProducts() {
+      const search = document.getElementById("search").value.toLowerCase().trim();
+      const filtered = products.filter(product =>
+        (currentCategory === "All" || product.category === currentCategory) &&
+        (product.name.toLowerCase().includes(search) || product.description.toLowerCase().includes(search))
+      );
+      document.getElementById("productCount").textContent = filtered.length + " products found";
+
+      const grid = document.getElementById("productGrid");
+      if (!filtered.length) {
+        grid.innerHTML = '<div class="empty">No products found. Try another search.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(product => `
+        <article class="product">
+          <img src="${safe(product.image)}" alt="${safe(product.name)}" loading="lazy"
+            onerror="this.onerror=null;this.src='https://placehold.co/600x400/f0efff/333?text=Product+Image'">
+          <div class="product-info">
+            <h3>${safe(product.name)}</h3>
+            <div class="description">${safe(product.description)}<br><small>${safe(product.category)}</small></div>
+            <div class="price">${money(product.price)}</div>
+            <button class="add-btn" type="button" onclick="addToCart(${Number(product.id)})">Add to Cart +</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function addToCart(id) {
+      const product = products.find(item => item.id === id);
+      if (!product) return;
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({
+          id: product.id,
+          qty: 1
+        });
+      }
+      saveData();
+      renderCart();
+      showNotice(product.name + " added to cart!");
+    }
+
+    function renderMoneyOverview() {
+      const requests = loadData("nova_order_requests", []);
+      const requestedTotal = requests.reduce((total, request) => total + Number(request.total || 0), 0);
+      const cartTotal = cart.reduce((total, item) => {
+        const product = products.find(entry => entry.id === item.id);
+        return total + (product ? product.price * item.qty : 0);
+      }, 0);
+      const count = document.getElementById("orderRequestCount");
+      const total = document.getElementById("orderRequestTotal");
+      const currentCart = document.getElementById("profileCartTotal");
+      if (count) count.textContent = requests.length.toLocaleString("en-IN");
+      if (total) total.textContent = money(requestedTotal);
+      if (currentCart) currentCart.textContent = money(cartTotal);
+    }
+
+    function renderCart() {
+      cart = cart.filter(item => products.some(product => product.id === item.id) && item.qty > 0);
+      const container = document.getElementById("cartItems");
+      let total = 0;
+      let count = 0;
+
+      if (!cart.length) {
+        container.innerHTML = "<p>Your cart is empty. Browse products and add your favourites.</p>";
+      } else {
+        container.innerHTML = cart.map(item => {
+          const product = products.find(entry => entry.id === item.id);
+          total += product.price * item.qty;
+          count += item.qty;
+          return `
+            <div class="cart-item">
+              <img src="${safe(product.image)}" alt="">
+              <div class="cart-info">
+                <h4>${safe(product.name)}</h4>
+                <strong>${money(product.price * item.qty)}</strong>
+                <div class="qty">
+                  <button type="button" onclick="changeQty(${product.id}, -1)" aria-label="Decrease quantity">−</button>
+                  <span>${item.qty}</span>
+                  <button type="button" onclick="changeQty(${product.id}, 1)" aria-label="Increase quantity">+</button>
+                  <button class="remove" type="button" onclick="removeFromCart(${product.id})">Remove</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      document.getElementById("cartCount").textContent = count;
+      document.getElementById("cartTotal").textContent = money(total);
+      saveData();
+      renderMoneyOverview();
+    }
+
+    function changeQty(id, change) {
+      const item = cart.find(entry => entry.id === id);
+      if (!item) return;
+      item.qty += change;
+      if (item.qty <= 0) {
+        cart = cart.filter(entry => entry.id !== id);
+      }
+      renderCart();
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
+    }
+
+    function clearCart() {
+      if (!cart.length) {
+        showNotice("Your cart is already empty.");
+        return;
+      }
+      if (confirm("Remove all products from your cart?")) {
+        cart = [];
+        renderCart();
+        showNotice("Cart cleared.");
+      }
+    }
+
+    function openCheckout() {
+      if (!cart.length) {
+        showNotice("Please add products to your cart first.");
+        return;
+      }
+      document.getElementById("checkoutPanel").hidden = false;
+      goTo("checkoutPanel");
+    }
+
+    document.getElementById("checkoutForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      if (!cart.length) {
+        showNotice("Your cart is empty.");
+        return;
+      }
+
+      const formData = new FormData(this);
+      const customer = String(formData.get("customer")).trim();
+      const phone = String(formData.get("phone")).trim();
+      const address = String(formData.get("address")).trim();
+      if (!customer || !phone || !address) {
+        showNotice("Please fill in all required fields.");
+        return;
+      }
+
+      let total = 0;
+      const orderedItems = cart.map(item => {
+        const product = products.find(entry => entry.id === item.id);
+        total += product.price * item.qty;
+        return {
+          name: product.name,
+          price: product.price,
+          qty: item.qty
+        };
+      });
+      const order = {
+        id: Date.now(),
+        customer,
+        phone,
+        email: String(formData.get("email") || "").trim(),
+        delivery: String(formData.get("delivery")),
+        address,
+        notes: String(formData.get("notes") || "").trim(),
+        items: orderedItems,
+        total,
+        createdAt: new Date().toISOString()
+      };
+      const orderRequests = loadData("nova_order_requests", []);
+      orderRequests.push(order);
+
+      try {
+        localStorage.setItem("nova_order_requests", JSON.stringify(orderRequests));
+      } catch (error) {
+        showNotice("This browser could not save your order. Please try again.");
+        return;
+      }
+
+      renderMoneyOverview();
+      renderAdminOrders();
+
+      const emailLines = orderedItems.map(item =>
+        `${item.name} x ${item.qty} = ${money(item.price * item.qty)}`
+      );
+      const message = [
+        "NEW ORDER - NAMMADE KADA", "",
+        "Customer: " + customer,
+        "Phone: " + phone,
+        "Email: " + (order.email || "Not provided"),
+        "Delivery: " + order.delivery,
+        "Address: " + address,
+        "Items:", ...emailLines, "",
+        "Subtotal: " + money(total),
+        "Delivery fee: To be confirmed",
+        "Notes: " + (order.notes || "None")
+      ].join("\n");
+
+      const oldLink = document.getElementById("emailOrderLink");
+      if (oldLink) oldLink.remove();
+
+      if (STORE_EMAIL && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(STORE_EMAIL)) {
+        const emailOrderLink = document.createElement("a");
+        emailOrderLink.id = "emailOrderLink";
+        emailOrderLink.href = "mailto:" + STORE_EMAIL +
+          "?subject=" + encodeURIComponent("New order - NAMMADE KADA") +
+          "&body=" + encodeURIComponent(message);
+        emailOrderLink.textContent = "✉️ Open email to send your order";
+        emailOrderLink.className = "email-order-link";
+        this.appendChild(emailOrderLink);
+      }
+
+      cart = [];
+      renderCart();
+      document.getElementById("checkoutPanel").hidden = true;
+      showNotice("Order received and added to the admin order inbox.");
+    });
+
+    let authRole = "customer";
+    let customerSignUp = false;
+    let authSession = loadData("nova_session", null);
+
+    function openLogin(role = "customer") {
+      setLoginRole(role);
+      document.getElementById("authDialog").hidden = false;
+      document.body.style.overflow = "hidden";
+      const activeForm = role === "admin" ? "adminLoginForm" : "customerLoginForm";
+      document.querySelector(`#${activeForm} input`).focus();
+    }
+
+    function closeLogin() {
+      document.getElementById("authDialog").hidden = true;
+      document.body.style.overflow = "";
+    }
+
+    function setLoginRole(role) {
+      authRole = role;
+      document.getElementById("customerTab").classList.toggle("active", role === "customer");
+      document.getElementById("adminTab").classList.toggle("active", role === "admin");
+      document.getElementById("customerTab").setAttribute("aria-selected", String(role === "customer"));
+      document.getElementById("adminTab").setAttribute("aria-selected", String(role === "admin"));
+      document.getElementById("customerLoginForm").hidden = role !== "customer";
+      document.getElementById("adminLoginForm").hidden = role !== "admin";
+      document.getElementById("authTitle").textContent = role === "admin" ? "Admin access" : "Welcome to NAMMADE KADA";
+      document.getElementById("authDescription").textContent = role === "admin" ?
+        "Sign in to manage the demo storefront." : "Sign in or create a customer account.";
+    }
+
+    function toggleCustomerMode() {
+      customerSignUp = !customerSignUp;
+      const nameField = document.getElementById("customerNameField");
+      nameField.hidden = !customerSignUp;
+      nameField.querySelector("input").required = customerSignUp;
+      document.querySelector('#customerLoginForm input[name="password"]').autocomplete = customerSignUp ? "new-password" : "current-password";
+      document.getElementById("customerSubmit").textContent = customerSignUp ? "Create account" : "Sign in";
+      document.getElementById("authSwitchText").textContent = customerSignUp ? "Already a customer?" : "New to NAMMADE KADA?";
+      document.getElementById("authSwitchButton").textContent = customerSignUp ? "Sign in" : "Create an account";
+    }
+
+    function finishSignIn(session, message) {
+      authSession = session;
+      try {
+        localStorage.setItem("nova_session", JSON.stringify(session));
+      } catch (error) {
+        showNotice("Could not save your sign-in on this browser.");
+      }
+      closeLogin();
+      updateAccountButton();
+      showNotice(message);
+    }
+
+    function updateAccountButton() {
+      const button = document.getElementById("accountButton");
+      if (!authSession) {
+        button.textContent = "Sign in";
+        button.onclick = () => openLogin("customer");
+        return;
+      }
+
+      button.textContent = "Sign out";
+      button.onclick = signOut;
+    }
+
+    function signOut() {
+      authSession = null;
+      try {
+        localStorage.removeItem("nova_session");
+      } catch (error) {
+        // Continue signing out for this page view if browser storage is unavailable.
+      }
+      document.getElementById("adminPanel").hidden = true;
+      updateAccountButton();
+      window.location.href = "/login";
+    }
+
+    document.getElementById("customerLoginForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+      const email = String(formData.get("email")).trim().toLowerCase();
+      const password = String(formData.get("password"));
+      let customers = loadData("nova_customers", []);
+
+      if (customerSignUp) {
+        const name = String(formData.get("name")).trim();
+        if (!name) {
+          showNotice("Please enter your name.");
+          return;
+        }
+        if (customers.some(customer => customer.email === email)) {
+          showNotice("An account with this email already exists. Please sign in.");
+          return;
+        }
+        customers.push({ name, email, password });
+        try {
+          localStorage.setItem("nova_customers", JSON.stringify(customers));
+        } catch (error) {
+          showNotice("Account storage is unavailable in this browser.");
+          return;
+        }
+        customerSignUp = false;
+        toggleCustomerMode();
+        this.reset();
+        finishSignIn({ role: "customer", name, email }, "Your customer account is ready.");
+        return;
+      }
+
+      const customer = customers.find(entry => entry.email === email && entry.password === password);
+      if (!customer) {
+        showNotice("We could not find a matching customer account.");
+        return;
+      }
+      finishSignIn({ role: "customer", name: customer.name, email: customer.email }, "Welcome back, " + customer.name + ".");
+    });
+
+    document.getElementById("adminLoginForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+      const email = String(formData.get("email")).trim().toLowerCase();
+      const password = String(formData.get("password")).trim();
+      const adminSettings = getAdminSettings();
+      if (email !== adminSettings.loginEmail.trim().toLowerCase() || password !== adminSettings.loginPassword) {
+        showNotice("The admin email or password is incorrect.");
+        return;
+      }
+      finishSignIn({ role: "admin", name: adminSettings.displayName, email }, "Admin access granted.");
+      renderAdmin();
+      document.getElementById("adminPanel").hidden = false;
+      populateAdminSettings();
+      goTo("adminPanel");
+    });
+
+    function populateAdminSettings() {
+      const settings = getAdminSettings();
+      const profileForm = document.getElementById("adminProfileForm");
+      const settingsForm = document.getElementById("adminSettingsForm");
+      profileForm.elements.displayName.value = settings.displayName || "Store Admin";
+      profileForm.elements.nickname.value = settings.nickname || "";
+      profileForm.elements.contactEmail.value = settings.contactEmail || "";
+      profileForm.elements.profilePicture.value = settings.profilePicture || "";
+      const preview = document.getElementById("profilePicturePreview");
+      preview.hidden = !settings.profilePicture;
+      preview.src = settings.profilePicture || "";
+      settingsForm.elements.loginEmail.value = settings.loginEmail || ADMIN_DEFAULT_EMAIL;
+      settingsForm.elements.loginPassword.value = "";
+      renderMoneyOverview();
+    }
+
+    document.getElementById("adminProfileForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const current = getAdminSettings();
+      const formData = new FormData(this);
+      const displayName = String(formData.get("displayName")).trim();
+      const nickname = String(formData.get("nickname")).trim();
+      const contactEmail = String(formData.get("contactEmail")).trim();
+      const profilePicture = String(formData.get("profilePicture")).trim();
+      if (!displayName || !contactEmail) {
+        showNotice("Please complete your name and contact email.");
+        return;
+      }
+      const updated = { ...current, displayName, nickname, contactEmail, profilePicture };
+      localStorage.setItem(ADMIN_SETTINGS_KEY, JSON.stringify(updated));
+      const preview = document.getElementById("profilePicturePreview");
+      preview.hidden = !profilePicture;
+      preview.src = profilePicture || "";
+      if (authSession && authSession.role === "admin") {
+        authSession.name = nickname || displayName;
+        authSession.email = contactEmail;
+        localStorage.setItem("nova_session", JSON.stringify(authSession));
+      }
+      showNotice("Profile saved.");
+    });
+
+    document.getElementById("adminSettingsForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const current = getAdminSettings();
+      const formData = new FormData(this);
+      const loginEmail = String(formData.get("loginEmail")).trim();
+      const newPassword = String(formData.get("loginPassword"));
+      if (!loginEmail) {
+        showNotice("Please enter an admin login email.");
+        return;
+      }
+      if (newPassword && newPassword.length < 6) {
+        showNotice("Use a password with at least 6 characters.");
+        return;
+      }
+      const updated = {
+        ...current,
+        loginEmail,
+        loginPassword: newPassword || current.loginPassword
+      };
+      localStorage.setItem(ADMIN_SETTINGS_KEY, JSON.stringify(updated));
+      this.elements.loginPassword.value = "";
+      showNotice("Sign-in settings saved. Use the updated credentials next time.");
+    });
+
+    document.getElementById("authDialog").addEventListener("click", function(event) {
+      if (event.target === this) closeLogin();
+    });
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape" && !document.getElementById("authDialog").hidden) closeLogin();
+    });
+
+    function openProfile() {
+      if (!authSession || authSession.role !== "admin") {
+        openLogin("admin");
+        return;
+      }
+      const panel = document.getElementById("adminPanel");
+      panel.hidden = false;
+      renderAdmin();
+      populateAdminSettings();
+      goTo("adminPanel");
+    }
+
+    function toggleAdmin() {
+      if (!authSession || authSession.role !== "admin") {
+        openLogin("admin");
+        return;
+      }
+      const panel = document.getElementById("adminPanel");
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        renderAdmin();
+        populateAdminSettings();
+        goTo("adminPanel");
+      }
+    }
+
+    function renderAdminOrders() {
+      const inbox = document.getElementById("adminOrderInbox");
+      if (!inbox) return;
+
+      const orders = loadData("nova_order_requests", []).slice().reverse();
+      if (!orders.length) {
+        inbox.innerHTML = '<p class="empty">No customer orders yet. New order requests will appear here.</p>';
+        return;
+      }
+
+      inbox.innerHTML = orders.map(order => {
+        const orderItems = Array.isArray(order.items) ? order.items : [];
+        const itemList = orderItems.map(item =>
+          `<li>${safe(item.name)} × ${Number(item.qty) || 0} — ${money(Number(item.price) * Number(item.qty))}</li>`
+        ).join("");
+        const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString() : "Date unavailable";
+        return `
+          <article class="order-message">
+            <div class="order-message-heading">
+              <div>
+                <p class="eyebrow">NEW ORDER REQUEST</p>
+                <h4>${safe(order.customer || "Customer")}</h4>
+              </div>
+              <time class="small">${safe(orderDate)}</time>
+            </div>
+            <p><strong>Phone:</strong> ${safe(order.phone || "Not provided")}</p>
+            <p><strong>Email:</strong> ${safe(order.email || "Not provided")}</p>
+            <p><strong>Delivery:</strong> ${safe(order.delivery || "Not specified")}</p>
+            <p><strong>Address:</strong> ${safe(order.address || "Not provided")}</p>
+            <ul>${itemList || "<li>Item details unavailable</li>"}</ul>
+            <p><strong>Order total:</strong> ${money(Number(order.total) || 0)}</p>
+            <p><strong>Notes:</strong> ${safe(order.notes || "None")}</p>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderAdmin() {
+      if (!authSession || authSession.role !== "admin") {
+        document.getElementById("adminPanel").hidden = true;
+        return;
+      }
+      document.getElementById("adminProducts").innerHTML = products.map(product => `
+        <div class="admin-item">
+          <span>${safe(product.name)} — ${money(product.price)} <small>(${safe(product.category)})</small></span>
+          <button class="remove" type="button" onclick="deleteProduct(${Number(product.id)})">Delete</button>
+        </div>
+      `).join("");
+      renderAdminOrders();
+    }
+
+    document.getElementById("productForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      if (!authSession || authSession.role !== "admin") {
+        showNotice("Only an admin can add products.");
+        return;
+      }
+      const formData = new FormData(this);
+      const name = String(formData.get("name")).trim();
+      const price = Number(formData.get("price"));
+      const description = String(formData.get("description")).trim();
+      const image = String(formData.get("image")).trim();
+      if (!name || !description || !Number.isFinite(price) || price <= 0) {
+        showNotice("Enter a product name, description and valid price.");
+        return;
+      }
+
+      products.push({
+        id: Date.now(),
+        name,
+        category: formData.get("category"),
+        price,
+        image: image || "https://placehold.co/600x400/f0efff/333?text=New+Product",
+        description
+      });
+      saveData();
+      renderProducts();
+      renderAdmin();
+      this.reset();
+      showNotice("Product added successfully.");
+    });
+
+    function deleteProduct(id) {
+      if (!authSession || authSession.role !== "admin") {
+        showNotice("Only an admin can remove products.");
+        return;
+      }
+      if (!confirm("Delete this product?")) return;
+      products = products.filter(product => product.id !== id);
+      cart = cart.filter(item => item.id !== id);
+      saveData();
+      renderProducts();
+      renderCart();
+      renderAdmin();
+      showNotice("Product deleted.");
+    }
+
+    function resetProducts() {
+      if (!authSession || authSession.role !== "admin") {
+        showNotice("Only an admin can reset products.");
+        return;
+      }
+      if (!confirm("Reset products to the original 42 demo products?")) return;
+      products = originalProducts.map(product => ({
+        ...product
+      }));
+      cart = [];
+      saveData();
+      renderProducts();
+      renderCart();
+      renderAdmin();
+      showNotice("Demo products restored.");
+    }
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    updateAccountButton();
+    renderProducts();
+    renderCart();
+
+  </script>
+</body>
+
+</html>
