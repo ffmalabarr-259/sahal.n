@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign in | NAMMADE KADA</title>
-  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="theme.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -255,7 +255,7 @@
 <body>
   <main class="login-shell">
     <section class="login-story" aria-label="NAMMADE KADA welcome">
-      <a class="login-brand" href="/">NAMMADE <span>KADA</span></a>
+      <a class="login-brand" href="index.html">NAMMADE <span>KADA</span></a>
       <div class="story-copy">
         <p class="eyebrow">Thoughtfully chosen. Made for everyday.</p>
         <h1>A little more special, every day.</h1>
@@ -340,7 +340,7 @@
     function saveSession(session) {
       try {
         localStorage.setItem("nova_session", JSON.stringify(session));
-        window.location.href = "/";
+        window.location.href = "index.html";
       } catch (error) {
         document.getElementById("customerMessage").textContent = "Sign-in could not be saved in this browser.";
       }
@@ -441,7 +441,7 @@
 
     const existingSession = loadData("nova_session", null);
     if (existingSession && (existingSession.role === "customer" || existingSession.role === "admin")) {
-      window.location.replace("/");
+      window.location.replace("index.html");
     }
 
   </script>
